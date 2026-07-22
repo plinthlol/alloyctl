@@ -1,0 +1,20 @@
+# Compiled binary
+alloyctl
+alloyctl.exe
+
+# Build output directory
+dist/
+
+# Go toolchain
+*.test
+*.out
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
