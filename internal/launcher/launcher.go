@@ -173,12 +173,11 @@ func (p Plan) Launch(stdout, stderr io.Writer) error {
 		return fmt.Errorf("starting game process: %w", err)
 	}
 
-	// Ignore SIGHUP so closing terminal window doesn't crash alloyctl/Java
-	ignoreSIGHUP()
-
-	// Catch Ctrl+C (SIGINT) and SIGTERM so we can forward them to terminate Java cleanly
+	// Catch Ctrl+C (SIGINT), SIGTERM, and SIGHUP
+	// - SIGINT/SIGTERM: forward to Java so it exits cleanly
+	// - SIGHUP: terminal closed — exit alloyctl, leave Java running
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 
 	doneChan := make(chan error, 1)
 	go func() {
@@ -189,11 +188,14 @@ func (p Plan) Launch(stdout, stderr io.Writer) error {
 	case err := <-doneChan:
 		return err
 	case sig := <-sigChan:
-		// Forward Ctrl+C (SIGINT / SIGTERM) to the Java child process
+		if sig == syscall.SIGHUP {
+			// Terminal closed — exit launcher, leave Java running
+			return nil
+		}
+		// Forward SIGINT/SIGTERM to Java so it exits cleanly
 		if cmd.Process != nil {
 			_ = cmd.Process.Signal(sig)
 		}
-		// Wait for Java process to terminate cleanly
 		return <-doneChan
 	}
 }

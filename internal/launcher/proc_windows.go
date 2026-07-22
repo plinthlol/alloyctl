@@ -12,7 +12,3 @@ func setProcessGroup(cmd *exec.Cmd) {
 		CreationFlags: syscall.CREATE_NEW_PROCESS_GROUP,
 	}
 }
-
-func ignoreSIGHUP() {
-	// SIGHUP does not exist on Windows
-}
