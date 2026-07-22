@@ -1,7 +1,3 @@
-// Package launcher builds the final `java` command line (classpath, JVM
-// args, main class, game args) from a resolved version.Version plus
-// instance/account/Java details, and runs the game process, streaming its
-// stdout/stderr back to the launcher's own terminal.
 package launcher
 
 import (
@@ -17,37 +13,28 @@ import (
 	"alloy/internal/version"
 )
 
-// Plan is everything needed to build and run a launch command.
 type Plan struct {
 	Version      version.Version
 	JavaPath     string
-	GameDir      string // instance's mutable game directory
-	AssetsDir    string // shared assets root
-	NativesDir   string // per-launch temp dir with extracted native libs
-	LibrariesDir string // shared library cache root (jars laid out by maven path)
-	ClientJar    string // path to the downloaded client jar
-
-	// Account/session details.
-	Username    string
-	UUID        string
-	AccessToken string // "0" for offline accounts — vanilla accepts this
-	UserType    string // "legacy" (offline) or "msa" (online)
-
-	MemoryMB int
-	ExtraJVM []string
-
-	Width, Height int // 0 = don't pass a fixed resolution
+	GameDir      string
+	AssetsDir    string
+	NativesDir   string
+	LibrariesDir string
+	ClientJar    string
+	Username     string
+	UUID         string
+	AccessToken  string
+	UserType     string
+	MemoryMB     int
+	ExtraJVM     []string
+	Width        int
+	Height       int
 }
 
-// Env returns the version.Env for the current machine — the same
-// resolver used for both libraries and arguments so a version's declared
-// rules only need to be evaluated once, consistently.
 func (p Plan) env() version.Env {
 	return version.CurrentEnv()
 }
 
-// substitutions builds the ${...} placeholder map used by both the
-// modern arguments.* format and the legacy minecraftArguments string.
 func (p Plan) substitutions(classpath string) map[string]string {
 	width := "854"
 	height := "480"
@@ -78,9 +65,6 @@ func (p Plan) substitutions(classpath string) map[string]string {
 	}
 }
 
-// BuildCommand assembles the full argv for the java process (JVM args +
-// main class + game args), handling both the modern rules-based
-// arguments.* format and the pre-1.13 minecraftArguments string.
 func (p Plan) BuildCommand() ([]string, error) {
 	env := p.env()
 	classpath := p.Classpath()
@@ -89,12 +73,9 @@ func (p Plan) BuildCommand() ([]string, error) {
 	var argv []string
 
 	if p.Version.Arguments != nil {
-		// Modern format (1.13+): JVM args come from the version JSON too.
 		jvm := version.ResolveArguments(p.Version.Arguments.JVM, env, subs)
 		argv = append(argv, jvm...)
 	} else {
-		// Legacy format: synthesize the standard JVM args ourselves, since
-		// old version JSONs don't declare any.
 		argv = append(argv, p.legacyJVMArgs(classpath)...)
 	}
 
@@ -128,8 +109,6 @@ func osIsMac() bool {
 	return version.CurrentEnv().OSName == "osx"
 }
 
-// Classpath builds the OS path-list-separated classpath string: every
-// resolved (non-natives) library jar, plus the client jar last.
 func (p Plan) Classpath() string {
 	env := p.env()
 	libs := version.ResolveLibraries(p.Version.Libraries, env)
@@ -149,8 +128,6 @@ func (p Plan) Classpath() string {
 	return strings.Join(parts, sep)
 }
 
-// Launch runs the built command, streaming stdout/stderr to the current
-// process's own streams, and blocks until the game exits.
 func (p Plan) Launch(stdout, stderr io.Writer) error {
 	argv, err := p.BuildCommand()
 	if err != nil {
@@ -166,16 +143,12 @@ func (p Plan) Launch(stdout, stderr io.Writer) error {
 	cmd.Stderr = stderr
 	cmd.Stdin = os.Stdin
 
-	// Isolate Java into its own process group so closing the terminal (SIGHUP) doesn't kill it
 	setProcessGroup(cmd)
 
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("starting game process: %w", err)
 	}
 
-	// Catch Ctrl+C (SIGINT), SIGTERM, and SIGHUP
-	// - SIGINT/SIGTERM: forward to Java so it exits cleanly
-	// - SIGHUP: terminal closed — exit alloyctl, leave Java running
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGHUP)
 
@@ -189,12 +162,10 @@ func (p Plan) Launch(stdout, stderr io.Writer) error {
 		return err
 	case sig := <-sigChan:
 		if sig == syscall.SIGHUP {
-			// Terminal closed — exit launcher, leave Java running
 			return nil
 		}
-		// Forward SIGINT/SIGTERM to Java so it exits cleanly
 		if cmd.Process != nil {
-			_ = cmd.Process.Signal(sig)
+			signalJava(cmd.Process, sig)
 		}
 		return <-doneChan
 	}
