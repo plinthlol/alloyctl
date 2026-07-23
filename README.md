@@ -41,8 +41,8 @@ alloyctl install 1.20.4 --quilt           # Quilt
 alloyctl install 1.20.4 --neoforge        # NeoForge
 
 # Play
-alloyctl play                  # Latest instance
-alloyctl play 1.20.4-fabric   # Specific instance
+alloyctl play                  # List installed instances
+alloyctl play 1.20.4-fabric   # Launch specific instance
 
 # Manage
 alloyctl rename old new
