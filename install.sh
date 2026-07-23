@@ -3,6 +3,7 @@ set -e
 
 REPO="plinthlol/alloyctl"
 BINARY="alloyctl"
+INSTALL_DIR="$HOME/.local/bin"
 
 case "$(uname -s)" in
     Linux*)     OS="linux";;
@@ -31,14 +32,10 @@ fi
 
 URL="https://github.com/${REPO}/releases/latest/download/${FILENAME}"
 
-echo "Downloading ${FILENAME}..."
-curl -sL -o "${BINARY}" "${URL}"
-chmod +x "${BINARY}"
+mkdir -p "${INSTALL_DIR}"
 
-echo "Installed ${BINARY} to $(pwd)/${BINARY}"
-echo ""
-echo "Move it to your PATH:"
-echo "  sudo mv ${BINARY} /usr/local/bin/"
-echo ""
-echo "Or add current directory to PATH:"
-echo "  export PATH=\"\$(pwd):\${PATH}\""
+echo "Downloading ${FILENAME}..."
+curl -sL -o "${INSTALL_DIR}/${BINARY}" "${URL}"
+chmod +x "${INSTALL_DIR}/${BINARY}"
+
+echo "Installed ${BINARY} to ${INSTALL_DIR}/${BINARY}"

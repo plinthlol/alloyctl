@@ -26,7 +26,7 @@
 curl -sL https://raw.githubusercontent.com/plinthlol/alloyctl/master/install.sh | sh
 ```
 
-This auto-detects your platform (Linux, macOS, Windows) and architecture (amd64, arm64).
+This auto-detects your platform (Linux, macOS, Windows) and architecture (amd64, arm64), and installs to `~/.local/bin/`.
 
 Linux binaries work on both GNU and musl systems.
 
