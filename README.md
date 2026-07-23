@@ -8,6 +8,12 @@
 
 ---
 
+> **Note**
+>
+> This project is complete and stable. Major new features are unlikely, but bug fixes and improvements may still happen.
+>
+> Pull requests are welcome — feel free to fork and contribute!
+
 </div>
 
 ## Install
