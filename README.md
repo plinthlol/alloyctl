@@ -4,7 +4,7 @@
 
 # alloyctl
 
-**A clean, fast Minecraft launcher**
+**A Minecraft launcher. Minimal but featureful.**
 
 ---
 
@@ -20,11 +20,25 @@
 
 ## Install
 
+**One-liner:**
+
+```bash
+curl -sL https://raw.githubusercontent.com/plinthlol/alloyctl/master/install.sh | sh
+```
+
+This auto-detects your platform (Linux, macOS, Windows) and architecture (amd64, arm64).
+
+Linux binaries work on both GNU and musl systems.
+
+**Or manually:**
+
+Download from [Releases](https://github.com/plinthlol/alloyctl/releases) and place in your PATH.
+
+**Or build from source:**
+
 ```bash
 go install github.com/plinthlol/alloyctl@latest
 ```
-
-Or download a release from [Releases](https://github.com/plinthlol/alloyctl/releases).
 
 ## Usage
 
